@@ -93,7 +93,7 @@ def experiment():
         s = s_next
 
     mean_reward_per_timestep = total_reward/timesteps    
-    print(f"Mean reward per timestep under optimal policy: {mean_reward_per_timestep}")
+    print(f"Mean reward per timestep for sample run: {mean_reward_per_timestep}")
     
 
 if __name__ == '__main__':
