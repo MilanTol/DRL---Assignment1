@@ -36,9 +36,13 @@ class BaseAgent:
         elif policy == 'softmax':
             if temp is None:
                 raise KeyError("Provide a temperature")
-                
-            # TO DO: Add own code
-            a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
+            
+            temp_inv = 1/temp #divide first, for computational speed
+            # when looking at eq (3), note that the denominator is nothing but normalization.
+            
+            epsilon = np.sum(self.Q_sa[s]*temp_inv) * np.random.uniform(0,1)
+            cumulative = np.cumsum(self.Q_sa[s]*temp_inv) #compute cumulative distribution
+            a = argmax(-np.abs(epsilon - cumulative)) #find root of epsilon - cumulative 
               
         return a
         
