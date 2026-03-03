@@ -17,7 +17,7 @@ class StochasticWindyGridworld:
         Compared to the book version, the vertical wind is now stochastic, and blows 90% of times
     '''
     
-    def __init__(self,initialize_model=True):
+    def __init__(self,initialize_model=True, reward_per_step:float = -1, wind_blows_proportion:float = 0.9):
         self.height = 7 # 7
         self.width = 10 # 10
         self.shape = (self.width, self.height)
@@ -31,9 +31,9 @@ class StochasticWindyGridworld:
                 }
         self.start_location = (0,3)
         self.winds = (0,0,0,1,1,1,2,2,1,0)
-        self.wind_blows_proportion = 0.9 #stochasiticity of the wind: 0.9 times it triggers        
+        self.wind_blows_proportion = wind_blows_proportion #stochasiticity of the wind: wind_blows_proportion times it triggers        
 
-        self.reward_per_step = -1.0 # default reward on every step that does not reach a goal
+        self.reward_per_step = reward_per_step # default reward on every step that does not reach a goal
         self.goal_locations = [[7,3]] # [[6,2]] a vector specifying the goal locations in [[x1,y1],[x2,y2]] format
         self.goal_rewards = [100] # a vector specifying the associated rewards with the goals in self.goal_locations, in [r1,r2] format
         
@@ -169,6 +169,7 @@ class StochasticWindyGridworld:
     
                     # Update p_sas and r_sas
                     p_sas[s,a,next_state_without_wind] += (1-self.wind_blows_proportion)
+                    
                     for (i,goal) in enumerate(self.goal_locations):
                         if np.all(next_state_without_wind == goal): # reached a goal!
                             r_sas[s,a,next_state_without_wind]  = self.goal_rewards[i] 

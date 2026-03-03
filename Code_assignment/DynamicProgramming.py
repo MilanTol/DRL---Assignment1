@@ -53,7 +53,7 @@ def Q_value_iteration(env: StochasticWindyGridworld, gamma=1.0, threshold=0.001)
     actions = range(env.n_actions)
     
     i = 0
-    max_error = 1+ threshold
+    max_error = 1+threshold
     while max_error > threshold:
         Q_old = QIagent.Q_sa.copy() # store old Q_sa to compute error
         i += 1
@@ -65,15 +65,15 @@ def Q_value_iteration(env: StochasticWindyGridworld, gamma=1.0, threshold=0.001)
                 max_error = np.max(np.abs(QIagent.Q_sa - Q_old))
         del Q_old
         print(f"Q-value iteration, iteration {i}, max error {max_error}")
-        env.render(Q_sa=QIagent.Q_sa, plot_optimal_policy=True, step_pause=0.03)
+        env.render(Q_sa=QIagent.Q_sa, plot_optimal_policy=True, step_pause=0.1)
  
     return QIagent
 
 
 def experiment():
-    gamma = 1.0
-    threshold = 0.001
-    env = StochasticWindyGridworld(initialize_model=True)
+    gamma = 1
+    threshold = 1e-3
+    env = StochasticWindyGridworld(initialize_model=True, reward_per_step=-1, wind_blows_proportion=0.9)
     env.render()
     QIagent = Q_value_iteration(env,gamma,threshold)
     
