@@ -13,36 +13,62 @@ from Helper import argmax
 class QValueIterationAgent:
     ''' Class to store the Q-value iteration solution, perform updates, and select the greedy action '''
 
-    def __init__(self, n_states, n_actions, gamma, threshold=0.01):
-        self.n_states = n_states
+    def __init__(self, n_states:int, n_actions:int, gamma, threshold=0.01):
+        self.n_states = n_states 
         self.n_actions = n_actions
-        self.gamma = gamma
-        self.Q_sa = np.zeros((n_states,n_actions))
+        self.gamma = gamma #discount rate ([0,1]): quantifies how much future rewards are valued.
+        self.Q_sa = np.zeros((n_states,n_actions)) #instantiates table containing all Q(s,a) vals
         
-    def select_action(self,s):
-        ''' Returns the greedy best action in state s ''' 
-        # TO DO: Add own code
-        a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
+    def select_action(self, s:int) -> int:
+        ''' 
+        Returns the greedy best action in state s 
+        
+            s (int): integer corresponding to state    
+        ''' 
+        # greedy policy is a discrete policy that only considers the best action:
+        a = argmax(self.Q_sa[s]) # Replace this with correct action selection
         return a
         
-    def update(self,s,a,p_sas,r_sas):
-        ''' Function updates Q(s,a) using p_sas and r_sas '''
-        # TO DO: Add own code
-        pass
+    def update(self, s:int, a:int, p_sas:np.ndarray, r_sas:np.ndarray) -> None:
+        ''' 
+        Function updates Q(s,a) using p_sas and r_sas 
+        p_sas must have a particular ordering!
+            p_sas: shape (n_states,) -> p(s'|s,a)
+            r_sas: shape (n_states,) -> r(s,a,s')
+        '''
+        max_Q_next_turn = np.max(self.Q_sa, axis=1) 
+        estimated_reward = r_sas + self.gamma * max_Q_next_turn # reward gained + Q(s',a') for optimal next action a' 
+        self.Q_sa[s, a] = np.sum(p_sas * estimated_reward, axis=0)
+        #we print the error in Q_value_iteration
+        return 
     
     
-def Q_value_iteration(env, gamma=1.0, threshold=0.001):
+def Q_value_iteration(env: StochasticWindyGridworld, gamma=1.0, threshold=0.001):
     ''' Runs Q-value iteration. Returns a converged QValueIterationAgent object '''
     
+    env._construct_model()
+
     QIagent = QValueIterationAgent(env.n_states, env.n_actions, gamma)
- 
-     # TO DO: IMPLEMENT Q-VALUE ITERATION HERE
-        
-    # Plot current Q-value estimates & print max error
-    # env.render(Q_sa=QIagent.Q_sa,plot_optimal_policy=True,step_pause=0.2)
-    # print("Q-value iteration, iteration {}, max error {}".format(i,max_error))
+    states = range(env.n_states)
+    actions = range(env.n_actions)
+    
+    i = 0
+    max_error = 1+ threshold
+    while max_error > threshold:
+        Q_old = QIagent.Q_sa.copy() # store old Q_sa to compute error
+        i += 1
+        for s in states:
+            for a in actions:
+                p_sas, r_sas = env.model(s,a)
+                QIagent.update(s=s, a=a, p_sas=p_sas, r_sas=r_sas)
+                # Plot current Q-value estimates & print max error
+                max_error = np.max(np.abs(QIagent.Q_sa - Q_old))
+        del Q_old
+        print(f"Q-value iteration, iteration {i}, max error {max_error}")
+        env.render(Q_sa=QIagent.Q_sa, plot_optimal_policy=True, step_pause=0.03)
  
     return QIagent
+
 
 def experiment():
     gamma = 1.0
@@ -54,14 +80,21 @@ def experiment():
     # view optimal policy
     done = False
     s = env.reset()
+    total_reward = 0
+    timesteps = 0
     while not done:
         a = QIagent.select_action(s)
         s_next, r, done = env.step(a)
-        env.render(Q_sa=QIagent.Q_sa,plot_optimal_policy=True,step_pause=0.5)
+
+        total_reward += r
+        timesteps += 1
+
+        env.render(Q_sa=QIagent.Q_sa,plot_optimal_policy=True,step_pause=0.3)
         s = s_next
 
-    # TO DO: Compute mean reward per timestep under the optimal policy
-    # print("Mean reward per timestep under optimal policy: {}".format(mean_reward_per_timestep))
+    mean_reward_per_timestep = total_reward/timesteps    
+    print(f"Mean reward per timestep under optimal policy: {mean_reward_per_timestep}")
     
+
 if __name__ == '__main__':
     experiment()
