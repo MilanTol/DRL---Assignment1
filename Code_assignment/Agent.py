@@ -28,8 +28,10 @@ class BaseAgent:
             if epsilon is None:
                 raise KeyError("Provide an epsilon")
                 
-            # TO DO: Add own code
-            a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
+            if np.random.uniform(0, 1) < epsilon: #with probability epsilon, try a random action
+                a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
+            else:
+                a = argmax(self.Q_sa[s]) #follow "best action" according to current Q_sa
                  
         elif policy == 'softmax':
             if temp is None:
