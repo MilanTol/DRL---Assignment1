@@ -13,8 +13,7 @@ from Agent import BaseAgent
 import matplotlib.pyplot as plt
 
 class QLearningAgent(BaseAgent):
-        
-    def update(self, s, a, r, s_next, done):
+    def update(self, s, a, r, s_next):
         G = r + self.gamma * np.max(self.Q_sa[s_next])
         self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (G - self.Q_sa[s,a])
         pass
@@ -35,7 +34,7 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
         t += 1 
         a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp) #selection action based on some randomness policy
         s_next, r, done = env.step(a) # perform action in environment to observe next state, gained reward, and termination condition
-        agent.update(s, a, r, s_next, done) #update Q, based on observed reward
+        agent.update(s, a, r, s_next) #update Q, based on observed reward
         if done: #if the run is done, start over.
             s = env.reset()
         else:
@@ -51,7 +50,7 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
 
     return np.array(eval_returns), np.array(eval_timesteps)   
 
-def experiment(
+def q_learning_experiment(
         policy = 'egreedy', epsilon=None, temp=None, gamma = 1, 
         learning_rate=0.1,eval_interval = 1000, n_timesteps = 50001,
         plot = False
@@ -81,7 +80,7 @@ if __name__ == '__main__':
     for epsilon in [0.03, 0.1, 0.3]:
         eval_returns_list = []
         for i in range(repetitions):
-            eval_returns, eval_timesteps = experiment(policy='egreedy', epsilon=epsilon, n_timesteps=50001, eval_interval=1000)
+            eval_returns, eval_timesteps = q_learning_experiment(policy='egreedy', epsilon=epsilon, n_timesteps=50001, eval_interval=1000)
             eval_returns_list.append(eval_returns)
 
         mean_returns = np.mean(eval_returns_list, axis=0)
@@ -105,7 +104,7 @@ if __name__ == '__main__':
 
         eval_returns_list = []
         for i in range(repetitions):
-            eval_returns, eval_timesteps = experiment(policy='softmax', temp=temp, n_timesteps=50001, eval_interval=1000)
+            eval_returns, eval_timesteps = q_learning_experiment(policy='softmax', temp=temp, n_timesteps=50001, eval_interval=1000)
             eval_returns_list.append(eval_returns)
 
         mean_returns = np.mean(eval_returns_list, axis=0)

@@ -10,10 +10,12 @@ import numpy as np
 from Environment import StochasticWindyGridworld
 from Agent import BaseAgent
 
+import matplotlib.pyplot as plt
+
 class SarsaAgent(BaseAgent):
-        
-    def update(self,s,a,r,s_next,a_next,done):
-        # TO DO: Add own code
+    def update(self, s, a, r, s_next, a_next):
+        G = r + self.gamma * self.Q_sa[s_next, a_next]
+        self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (G - self.Q_sa[s,a])
         pass
 
         
@@ -23,32 +25,83 @@ def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, tem
     
     env = StochasticWindyGridworld(initialize_model=False)
     eval_env = StochasticWindyGridworld(initialize_model=False)
-    pi = SarsaAgent(env.n_states, env.n_actions, learning_rate, gamma)
+    agent = SarsaAgent(env.n_states, env.n_actions, learning_rate, gamma)
     eval_timesteps = []
     eval_returns = []
 
-    # TO DO: Write your SARSA algorithm here!
+    s = env._location_to_state(env.start_location)
+    a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp)
+    t=0
+    while t < n_timesteps:
+        t += 1 
+        s_next, r, done = env.step(a) # perform action in environment to observe next state, gained reward, and termination condition
+        a_next = agent.select_action(s_next, policy=policy, epsilon=epsilon, temp=temp) #selection action based on some randomness policy
+        agent.update(s, a, r, s_next, a_next) #update Q, based on observed reward
+        if done: #if the run is done, start over.
+            s = env.reset()
+            a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp)
+        else:
+            s = s_next
+            a = a_next
+
+        if t % eval_interval == 0:
+            eval_timesteps.append(t)
+            eval = agent.evaluate(eval_env)
+            eval_returns.append(eval) #use evaluation environment to not affect the testing environment!
+
+            if plot:
+                env.render(Q_sa=agent.Q_sa, plot_optimal_policy=True, step_pause=0.0001) # Plot the Q-value estimates during Q-learning execution   
+
+    return np.array(eval_returns), np.array(eval_timesteps)   
+
+
+def sarsa_experiment(
+        policy = 'egreedy', epsilon=None, temp=None, gamma = 1, 
+        learning_rate=0.1,eval_interval = 1000, n_timesteps = 50001,
+        plot = False
+        ):
     
-    # if plot:
-    #    env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during SARSA execution
-
-    return np.array(eval_returns), np.array(eval_timesteps) 
-
-
-def test():
-    n_timesteps = 1000
-    gamma = 1.0
-    learning_rate = 0.1
+    n_timesteps = n_timesteps
+    eval_interval= eval_interval
+    gamma = gamma
+    learning_rate = learning_rate
 
     # Exploration
-    policy = 'egreedy' # 'egreedy' or 'softmax' 
-    epsilon = 0.1
-    temp = 1.0
+    policy = policy # 'egreedy' or 'softmax' 
+    epsilon = epsilon
+    temp = temp
     
     # Plotting parameters
-    plot = True
-    sarsa(n_timesteps, learning_rate, gamma, policy, epsilon, temp, plot)
-            
+    plot = plot
+    eval_returns, eval_timesteps = sarsa(n_timesteps, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval)
+    return eval_returns, eval_timesteps
+
+
     
 if __name__ == '__main__':
-    test()
+
+    repetitions = 20
+
+    for epsilon in [0.03, 0.1, 0.3]:
+        eval_returns_list = []
+        for i in range(repetitions):
+            eval_returns, eval_timesteps = sarsa_experiment(policy='egreedy', epsilon=epsilon, n_timesteps=50001, eval_interval=1000)
+            eval_returns_list.append(eval_returns)
+
+        mean_returns = np.mean(eval_returns_list, axis=0)
+        std_returns = np.std(eval_returns_list, axis=0)
+        stderr = std_returns / np.sqrt(repetitions)
+        ci95 = 1.96 * stderr
+
+        plt.plot(eval_timesteps, np.mean(eval_returns_list, axis=0), label='egreedy:' + r'$\epsilon=$' + f'{epsilon}')
+        plt.fill_between(
+            eval_timesteps[:len(mean_returns)],
+            mean_returns - ci95,
+            mean_returns + ci95,
+            alpha=0.25
+        )
+
+    plt.legend()
+    plt.savefig("/home/milan/Desktop/DRL/Assignment1/plots/sarsa_egreedy.pdf")
+    plt.close()
+
