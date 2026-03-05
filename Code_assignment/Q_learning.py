@@ -13,11 +13,15 @@ from Agent import BaseAgent
 import matplotlib.pyplot as plt
 
 class QLearningAgent(BaseAgent):
-    def update(self, s, a, r, s_next):
-        G = r + self.gamma * np.max(self.Q_sa[s_next])
-        self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (G - self.Q_sa[s,a])
-        pass
+    def update(self, s, a, r, s_next, done):
+        if done:
+            target = r
+        else:
+            target = r + self.gamma * np.max(self.Q_sa[s_next])
 
+        self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (target - self.Q_sa[s,a])
+        return 
+    
 def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval=500):
     ''' runs a single repetition of q_learning
     Return: rewards, a vector with the observed rewards at each timestep ''' 
@@ -28,13 +32,13 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
     eval_timesteps = []
     eval_returns = []
 
-    s = env._location_to_state(env.start_location)
+    s = env.reset()
     t=0
     while t < n_timesteps:
         t += 1 
         a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp) #selection action based on some randomness policy
         s_next, r, done = env.step(a) # perform action in environment to observe next state, gained reward, and termination condition
-        agent.update(s, a, r, s_next) #update Q, based on observed reward
+        agent.update(s, a, r, s_next, done) #update Q, based on observed reward
         if done: #if the run is done, start over.
             s = env.reset()
         else:

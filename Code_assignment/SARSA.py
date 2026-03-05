@@ -13,10 +13,14 @@ from Agent import BaseAgent
 import matplotlib.pyplot as plt
 
 class SarsaAgent(BaseAgent):
-    def update(self, s, a, r, s_next, a_next):
-        G = r + self.gamma * self.Q_sa[s_next, a_next]
-        self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (G - self.Q_sa[s,a])
-        pass
+    def update(self, s, a, r, s_next, a_next, done):
+        if done:
+            target = r
+        else:
+            r + self.gamma * self.Q_sa[s_next, a_next]
+
+        self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (target - self.Q_sa[s,a])
+        return
 
         
 def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval=500):
@@ -29,14 +33,14 @@ def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, tem
     eval_timesteps = []
     eval_returns = []
 
-    s = env._location_to_state(env.start_location)
+    s = env.reset() #start at starting state
     a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp)
     t=0
     while t < n_timesteps:
         t += 1 
         s_next, r, done = env.step(a) # perform action in environment to observe next state, gained reward, and termination condition
         a_next = agent.select_action(s_next, policy=policy, epsilon=epsilon, temp=temp) #selection action based on some randomness policy
-        agent.update(s, a, r, s_next, a_next) #update Q, based on observed reward
+        agent.update(s, a, r, s_next, a_next, done) #update Q, based on observed reward
         if done: #if the run is done, start over.
             s = env.reset()
             a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp)
@@ -49,8 +53,8 @@ def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, tem
             eval = agent.evaluate(eval_env)
             eval_returns.append(eval) #use evaluation environment to not affect the testing environment!
 
-            if plot:
-                env.render(Q_sa=agent.Q_sa, plot_optimal_policy=True, step_pause=0.0001) # Plot the Q-value estimates during Q-learning execution   
+        if plot:
+            env.render(Q_sa=agent.Q_sa, plot_optimal_policy=True, step_pause=0.0001) # Plot the Q-value estimates during Q-learning execution   
 
     return np.array(eval_returns), np.array(eval_timesteps)   
 
