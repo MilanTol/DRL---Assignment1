@@ -58,7 +58,7 @@ def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma,
     t=0
     while t < n_timesteps:    
         t+=1
-        s = env._location_to_state(env.start_location)
+        s = env.reset()
 
         states = []
         states.append(s)
@@ -78,7 +78,7 @@ def n_step_Q(n_timesteps, max_episode_length, learning_rate, gamma,
         agent.update(states, actions, rewards, done=done, T_ep=T_ep)
             
         if plot:
-            env.render(Q_sa=agent.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during n-step Q-learning execution
+            env.render(Q_sa=agent.Q_sa,plot_optimal_policy=True,step_pause=1e-5) # Plot the Q-value estimates during n-step Q-learning execution
             
         if t % eval_interval == 0:
             eval_timesteps.append(t)
@@ -91,7 +91,7 @@ def test():
     n_timesteps = 10000
     max_episode_length = 100
     gamma = 1.0
-    learning_rate = 0.3
+    learning_rate = 0.1
     n = 5
     
     # Exploration

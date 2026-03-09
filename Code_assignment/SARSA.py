@@ -17,7 +17,7 @@ class SarsaAgent(BaseAgent):
         if done:
             target = r
         else:
-            r + self.gamma * self.Q_sa[s_next, a_next]
+            target = r + self.gamma * self.Q_sa[s_next, a_next]
 
         self.Q_sa[s,a] = self.Q_sa[s,a] + self.learning_rate * (target - self.Q_sa[s,a])
         return
