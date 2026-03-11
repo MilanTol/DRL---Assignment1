@@ -92,7 +92,7 @@ class StochasticWindyGridworld:
             raise ValueError("set initialize_model=True when creating Environment")
             
 
-    def render(self,Q_sa=None,plot_optimal_policy=False,step_pause=0.001):
+    def render(self,Q_sa=None,plot_optimal_policy=False,step_pause=0.001, fig_name=None):
         ''' Plot the environment 
         if Q_sa is provided, it will also plot the Q(s,a) values for each action in each state
         if plot_optimal_policy=True, it will additionally add an arrow in each state to indicate the greedy action '''
@@ -116,6 +116,9 @@ class StochasticWindyGridworld:
             
         # Update agent location
         self.agent_circle.center = self.agent_location+0.5
+        
+        if fig_name is not None:
+            plt.savefig(fig_name)
             
         # Draw figure
         plt.pause(step_pause)    
@@ -179,7 +182,7 @@ class StochasticWindyGridworld:
         return 
 
     def _initialize_plot(self):
-        self.fig,self.ax = plt.subplots()#figsize=(self.width, self.height+1)) # Start a new figure
+        self.fig,self.ax = plt.subplots(figsize=(self.width, self.height+1)) # Start a new figure
         self.ax.set_xlim([0,self.width])
         self.ax.set_ylim([0,self.height]) 
         self.ax.axes.xaxis.set_visible(False)

@@ -10,6 +10,8 @@ import numpy as np
 from Environment import StochasticWindyGridworld
 from Agent import BaseAgent
 
+import matplotlib.pyplot as plt
+
 class QLearningAgent(BaseAgent):
         
     def update(self,s,a,r,s_next,done):
@@ -53,23 +55,78 @@ def q_learning(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None
 
      
 
-def test():
+def q_learning_experiment(
+        policy = 'egreedy', epsilon=None, temp=None, gamma = 1, 
+        learning_rate=0.1,eval_interval = 1000, n_timesteps = 50001,
+        plot = False
+        ):
     
-    n_timesteps = 1000
-    eval_interval=100
-    gamma = 1.0
-    learning_rate = 0.1
+    n_timesteps = n_timesteps
+    eval_interval= eval_interval
+    gamma = gamma
+    learning_rate = learning_rate
 
     # Exploration
-    policy = 'egreedy' # 'egreedy' or 'softmax' 
-    epsilon = 0.1
-    temp = 1.0
+    policy = policy # 'egreedy' or 'softmax' 
+    epsilon = epsilon
+    temp = temp
     
     # Plotting parameters
-    plot = True
-
+    plot = plot
     eval_returns, eval_timesteps = q_learning(n_timesteps, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval)
-    print(eval_returns,eval_timesteps)
+    return eval_returns, eval_timesteps
+
+
 
 if __name__ == '__main__':
-    test()
+
+    repetitions = 20
+
+    for epsilon in [0.03, 0.1, 0.3]:
+        eval_returns_list = []
+        for i in range(repetitions):
+            eval_returns, eval_timesteps = q_learning_experiment(policy='egreedy', epsilon=epsilon, n_timesteps=50001, eval_interval=1000)
+            eval_returns_list.append(eval_returns)
+
+        mean_returns = np.mean(eval_returns_list, axis=0)
+        std_returns = np.std(eval_returns_list, axis=0)
+        stderr = std_returns / np.sqrt(repetitions)
+        ci95 = 1.96 * stderr
+
+        plt.plot(eval_timesteps, np.mean(eval_returns_list, axis=0), label='egreedy:' + r'$\epsilon=$' + f'{epsilon}')
+        plt.fill_between(
+            eval_timesteps[:len(mean_returns)],
+            mean_returns - ci95,
+            mean_returns + ci95,
+            alpha=0.25
+        )
+
+    plt.legend()
+    plt.savefig("/home/milan/Desktop/DRL/Assignment1/plots/Q_learning_egreedy.pdf")
+    plt.close()
+
+    for temp in [0.01, 0.1, 1]:
+
+        eval_returns_list = []
+        for i in range(repetitions):
+            eval_returns, eval_timesteps = q_learning_experiment(policy='softmax', temp=temp, n_timesteps=50001, eval_interval=1000)
+            eval_returns_list.append(eval_returns)
+
+        mean_returns = np.mean(eval_returns_list, axis=0)
+        std_returns = np.std(eval_returns_list, axis=0)
+        stderr = std_returns / np.sqrt(repetitions)
+        ci95 = 1.96 * stderr
+
+        plt.plot(eval_timesteps, mean_returns, label='softmax:' + r'$T=$' + f'{temp}')
+        plt.fill_between(
+            eval_timesteps[:len(mean_returns)],
+            mean_returns - ci95,
+            mean_returns + ci95,
+            alpha=0.25
+        )
+
+    plt.legend()
+    plt.savefig("/home/milan/Desktop/DRL/Assignment1/plots/Q_learning_softmax.pdf")
+
+    plt.xlabel('episode')
+    plt.close()
